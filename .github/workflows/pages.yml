@@ -1,0 +1,102 @@
+name: Build and deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [notion_update]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+env:
+  JEKYLL_ENV: production
+  JETBRAINS_MONO_VERSION: v2.304
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Restore JetBrains Mono cache
+        id: font-cache
+        uses: actions/cache@v4
+        with:
+          path: assets/fonts
+          key: ${{ runner.os }}-jetbrains-mono-${{ env.JETBRAINS_MONO_VERSION }}
+
+      - name: Download JetBrains Mono
+        if: steps.font-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/fonts
+          for weight in Regular Bold; do
+            curl --fail --location --retry 3 \
+              --output "assets/fonts/JetBrainsMono-${weight}.woff2" \
+              "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/fonts/webfonts/JetBrainsMono-${weight}.woff2"
+          done
+          curl --fail --location --retry 3 \
+            --output assets/fonts/OFL.txt \
+            "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/OFL.txt"
+
+      - name: Restore Notion sync cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .notion-sync.json
+            _notes/*.md
+          key: notion-posts-${{ github.repository }}-${{ github.run_id }}
+          restore-keys: |
+            notion-posts-${{ github.repository }}-
+
+      - name: Sync Notion posts
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python scripts/notion_to_posts.py
+
+      - name: Save Notion sync cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .notion-sync.json
+            _notes/*.md
+          key: notion-posts-${{ github.repository }}-${{ github.run_id }}
+
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --destination ./_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

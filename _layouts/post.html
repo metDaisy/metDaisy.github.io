@@ -1,0 +1,27 @@
+---
+layout: default
+---
+
+<article class="article-page">
+  <header class="article-header">
+    <h1>{{ page.title }}</h1>
+    <div class="article-properties">
+      <div class="article-property">
+        <span class="article-property__label" aria-hidden="true">▣ 날짜</span>
+        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y년 %m월 %d일" }}</time>
+      </div>
+      {% if page.tags %}
+        <div class="article-property">
+          <span class="article-property__label" aria-hidden="true">☷ 태그</span>
+          <div class="post-tags" aria-label="태그">
+            {% for tag in page.tags %}<span>#{{ tag }}</span>{% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="article-content">
+    {{ content }}
+  </div>
+</article>

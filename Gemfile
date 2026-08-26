@@ -1,0 +1,10 @@
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.4"
+gem "jekyll-theme-hacker", "~> 0.2"
+gem "jekyll-seo-tag"
+gem "liquid", "~> 4.0.4"
+gem "webrick"
+gem "csv"
+gem "bigdecimal"
+gem "wdm", "~> 0.2"
