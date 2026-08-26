@@ -24,7 +24,7 @@ POSTS_DIR = Path("_notes")
 LEGACY_POSTS_DIR = Path("_posts")
 STATE_FILE = Path(".notion-sync.json")
 MARKER = "<!-- notion-page-id:"
-STATE_VERSION = 2
+STATE_VERSION = 3
 
 
 def load_dotenv() -> None:
@@ -136,9 +136,7 @@ def page_tags(page: dict) -> list[str]:
     properties = page.get("properties", {})
     configured_name = os.environ.get("NOTION_TAG_PROPERTY", "")
     values = property_value(properties, configured_name, "multi_select")
-    if values:
-        return values
-    return [tag.strip() for tag in os.environ.get("NOTION_DEFAULT_TAGS", "").split(",") if tag.strip()]
+    return values or []
 
 
 def is_published(page: dict) -> bool:
