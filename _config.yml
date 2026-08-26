@@ -1,0 +1,11 @@
+title: Hacker GitHub Page
+description: 개인 GitHub Pages 사이트
+
+remote_theme: pages-themes/hacker@v0.2.0
+
+plugins:
+    - jekyll-remote-theme
+
+# GitHub Pages 프로젝트 사이트로 사용할 경우 필요하면 설정하세요.
+# url: "https://사용자명.github.io"
+# baseurl: "/저장소명"
