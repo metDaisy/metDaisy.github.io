@@ -10,3 +10,5 @@ vendor/
 _posts/
 _notes/
 .idea
+__pycache__/
+*.py[cod]
