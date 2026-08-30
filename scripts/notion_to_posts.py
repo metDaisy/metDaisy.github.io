@@ -24,7 +24,7 @@ POSTS_DIR = Path("_notes")
 LEGACY_POSTS_DIR = Path("_posts")
 STATE_FILE = Path(".notion-sync.json")
 MARKER = "<!-- notion-page-id:"
-STATE_VERSION = 3
+STATE_VERSION = 4
 
 
 def load_dotenv() -> None:
@@ -323,19 +323,31 @@ def main() -> None:
         or not state.get("last_scan_at")
     )
 
+    # Always refresh the database index so deleted or unpublished pages can be
+    # removed from the local cache. Only changed pages have their content read.
+    current_pages = [page for page in get_pages() if is_published(page)]
+    current_ids = {page["id"] for page in current_pages}
     if full_sync:
-        pages = get_pages()
+        pages = current_pages
     else:
-        pages = query_pages(
-            {
-                "timestamp": "last_edited_time",
-                "last_edited_time": {"on_or_after": state["last_scan_at"]},
-            }
-        )
+        last_scan_at = state["last_scan_at"]
+        pages = [
+            page
+            for page in current_pages
+            if (page.get("last_edited_time") or page.get("created_time", ""))
+            >= last_scan_at
+        ]
 
-    pages = [page for page in pages if is_published(page)]
-    page_states = {} if full_sync else dict(state.get("pages", {}))
-    active_ids = set(page_states)
+    page_states = (
+        {}
+        if full_sync
+        else {
+            page_id: item
+            for page_id, item in state.get("pages", {}).items()
+            if page_id in current_ids
+        }
+    )
+    active_ids = set(current_ids)
     active_files = {
         Path(item.get("filename")).name
         for item in page_states.values()
