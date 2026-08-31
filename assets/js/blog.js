@@ -96,6 +96,8 @@
         post.title,
         post.excerpt,
         post.content,
+        post.date,
+        post.date_iso,
         post.tags.join(" ")
       ].join(" "));
       return matchesTag && (!query || searchableText.includes(query));
