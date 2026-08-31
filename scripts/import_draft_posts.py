@@ -11,6 +11,31 @@ from pathlib import Path
 
 FRONT_MATTER = re.compile(r"\A---\r?\n(?P<body>.*?)(?:\r?\n)---\r?\n?", re.DOTALL)
 TAGS_LINE = re.compile(r"^(?P<indent>\s*)tags:\s*(?P<value>.*?)\s*$", re.MULTILINE)
+FENCE_LINE = re.compile(
+    r"^(?P<indent>\s*)(?P<fence>`{3,}|~{3,})(?P<info>[^\r\n]*)(?P<newline>\r?\n|$)",
+    re.MULTILINE,
+)
+CODE_LANGUAGE_ALIASES = {
+    "plain text": "text",
+    "plain-text": "text",
+    "plaintext": "text",
+}
+
+
+def normalize_fenced_code_info(content: str) -> str:
+    """Convert common non-Kramdown fence aliases into valid language names."""
+
+    def normalize_fence(match: re.Match[str]) -> str:
+        info = match.group("info").strip()
+        language = CODE_LANGUAGE_ALIASES.get(info.casefold())
+        if language is None:
+            return match.group(0)
+        return (
+            f"{match.group('indent')}{match.group('fence')}"
+            f"{language}{match.group('newline')}"
+        )
+
+    return FENCE_LINE.sub(normalize_fence, content)
 
 
 def normalize_front_matter(content: str, filename: str) -> str:
@@ -23,7 +48,7 @@ def normalize_front_matter(content: str, filename: str) -> str:
             f"title: {json.dumps(title, ensure_ascii=False)}\n"
             f"permalink: /{Path(filename).stem}/\n"
             "---\n\n"
-            + content
+            + normalize_fenced_code_info(content)
         )
 
     body = match.group("body")
@@ -42,7 +67,10 @@ def normalize_front_matter(content: str, filename: str) -> str:
     if not re.search(r"^permalink:\s*", body, re.MULTILINE):
         body += f"\npermalink: /{Path(filename).stem}/\n"
 
-    return f"---\n{body.rstrip()}\n---\n" + content[match.end() :]
+    return (
+        f"---\n{body.rstrip()}\n---\n"
+        + normalize_fenced_code_info(content[match.end() :])
+    )
 
 
 def markdown_files(source: Path) -> list[Path]:
