@@ -74,9 +74,13 @@ def normalize_front_matter(content: str, filename: str) -> str:
 
 
 def markdown_files(source: Path) -> list[Path]:
+    draft_root = source / "draft"
+    if not draft_root.is_dir():
+        raise RuntimeError(f"Draft directory not found in {source}")
+
     return sorted(
         path
-        for path in source.rglob("*.md")
+        for path in draft_root.rglob("*.md")
         if path.is_file()
         and ".git" not in path.parts
         and path.name.lower() not in {"readme.md", "changelog.md"}
@@ -86,7 +90,7 @@ def markdown_files(source: Path) -> list[Path]:
 def import_posts(source: Path, destination: Path) -> int:
     files = markdown_files(source)
     if not files:
-        raise RuntimeError(f"No Markdown posts found in {source}")
+        raise RuntimeError(f"No Markdown posts found in {source / 'draft'}")
 
     destination.mkdir(parents=True, exist_ok=True)
     for existing in destination.glob("*.md"):
