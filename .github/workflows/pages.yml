@@ -7,7 +7,7 @@ on:
     # 매일 한국 시간 09:00 (UTC 00:00)에 Notion 변경 사항 확인
     - cron: "0 0 * * *"
   repository_dispatch:
-    types: [notion_update]
+    types: [draft_update]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Checkout private draft repository
+        uses: actions/checkout@v6
+        with:
+          repository: metDaisy/github-page-draft-storage
+          token: ${{ secrets.DRAFT_REPO_TOKEN }}
+          path: draft-storage
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
@@ -61,29 +70,34 @@ jobs:
             --output assets/fonts/OFL.txt \
             "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/OFL.txt"
 
-      - name: Restore Notion sync cache
-        uses: actions/cache/restore@v5
-        with:
-          path: |
-            .notion-sync.json
-            _notes/*.md
-          key: notion-posts-${{ github.repository }}-${{ github.run_id }}
-          restore-keys: |
-            notion-posts-${{ github.repository }}-
+      - name: Import draft Markdown
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
 
-      - name: Sync Notion posts
-        env:
-          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
-          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-        run: python scripts/notion_to_posts.py
+          rm -f _notes/*.md
+          source_dir="draft-storage"
+          for candidate in draft-storage/posts draft-storage/_notes draft-storage/_posts; do
+            if [[ -d "$candidate" ]]; then
+              source_dir="$candidate"
+              break
+            fi
+          done
 
-      - name: Save Notion sync cache
-        uses: actions/cache/save@v5
-        with:
-          path: |
-            .notion-sync.json
-            _notes/*.md
-          key: notion-posts-${{ github.repository }}-${{ github.run_id }}
+          imported=0
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+            [[ "$name" == "README.md" ]] && continue
+            cp "$file" "_notes/$name"
+            imported=$((imported + 1))
+          done < <(find "$source_dir" -maxdepth 1 -type f -name '*.md' -print0)
+
+          if (( imported == 0 )); then
+            echo "No Markdown posts found in $source_dir" >&2
+            exit 1
+          fi
+          echo "Imported $imported Markdown post(s) from $source_dir"
 
       - name: Build with Jekyll
         run: bundle exec jekyll build --destination ./_site
