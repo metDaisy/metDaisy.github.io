@@ -71,33 +71,7 @@ jobs:
             "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/OFL.txt"
 
       - name: Import draft Markdown
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-
-          rm -f _notes/*.md
-          source_dir="draft-storage"
-          for candidate in draft-storage/posts draft-storage/_notes draft-storage/_posts; do
-            if [[ -d "$candidate" ]]; then
-              source_dir="$candidate"
-              break
-            fi
-          done
-
-          imported=0
-          while IFS= read -r -d '' file; do
-            name="$(basename "$file")"
-            [[ "$name" == "README.md" ]] && continue
-            cp "$file" "_notes/$name"
-            imported=$((imported + 1))
-          done < <(find "$source_dir" -maxdepth 1 -type f -name '*.md' -print0)
-
-          if (( imported == 0 )); then
-            echo "No Markdown posts found in $source_dir" >&2
-            exit 1
-          fi
-          echo "Imported $imported Markdown post(s) from $source_dir"
+        run: python scripts/import_draft_posts.py --source draft-storage --destination _notes
 
       - name: Build with Jekyll
         run: bundle exec jekyll build --destination ./_site
