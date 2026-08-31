@@ -20,6 +20,7 @@ CODE_LANGUAGE_ALIASES = {
     "plain-text": "text",
     "plaintext": "text",
 }
+EXCLUDED_MARKDOWN_NAMES = {"readme.md", "changelog.md", "agents.md"}
 
 
 def normalize_fenced_code_info(content: str) -> str:
@@ -83,7 +84,7 @@ def markdown_files(source: Path) -> list[Path]:
         for path in draft_root.rglob("*.md")
         if path.is_file()
         and ".git" not in path.parts
-        and path.name.lower() not in {"readme.md", "changelog.md"}
+        and path.name.lower() not in EXCLUDED_MARKDOWN_NAMES
     )
 
 
