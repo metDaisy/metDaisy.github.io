@@ -3,9 +3,6 @@ name: Build and deploy GitHub Pages
 on:
   push:
     branches: [main]
-  schedule:
-    # 매일 한국 시간 09:00 (UTC 00:00)에 Notion 변경 사항 확인
-    - cron: "0 0 * * *"
   repository_dispatch:
     types: [draft_update]
   workflow_dispatch:
