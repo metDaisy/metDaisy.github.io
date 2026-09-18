@@ -1,10 +1,19 @@
-name: Build and deploy GitHub Pages
+name: Build and deploy GitHub Pages (dev diary)
 
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/pages-dev-diary.yml'
+      - '_config.yml'
+      - '_layouts/**'
+      - 'assets/**'
+      - 'index.md'
+      - 'search.json'
+      - 'Gemfile'
+      - 'scripts/import_draft_posts.py'
   repository_dispatch:
-    types: [draft_update]
+    types: [dev_diary_update]
   workflow_dispatch:
 
 permissions:
@@ -64,14 +73,43 @@ jobs:
               "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/fonts/webfonts/JetBrainsMono-${weight}.woff2"
           done
           curl --fail --location --retry 3 \
-            --output assets/fonts/OFL.txt \
+            --output "assets/fonts/OFL.txt" \
             "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/${JETBRAINS_MONO_VERSION}/OFL.txt"
 
-      - name: Import draft Markdown
+      - name: Import dev-diary Markdown
         run: python scripts/import_draft_posts.py --source draft-storage --destination _notes
 
-      - name: Build with Jekyll
+      - name: Build dev diary with Jekyll
         run: bundle exec jekyll build --destination ./_site
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install MkDocs
+        run: python -m pip install --disable-pip-version-check "mkdocs>=1.6,<2" mkdocs-material
+
+      - name: Verify Hermes documentation source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d draft-storage/hermes-docs
+          test -n "$(find draft-storage/hermes-docs -type f -name '*.md' -print -quit)"
+
+      - name: Generate MkDocs navigation
+        run: >-
+          python scripts/generate_mkdocs_nav.py
+          --config ./mkdocs.yml
+          --docs-dir ./draft-storage/hermes-docs
+          --output ./.mkdocs.generated.yml
+
+      - name: Build Hermes Korean documentation
+        run: >-
+          mkdocs build
+          --strict
+          --config-file ./.mkdocs.generated.yml
+          --site-dir ./_site/hermes-ko-docs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

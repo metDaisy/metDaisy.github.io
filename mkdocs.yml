@@ -1,0 +1,11 @@
+site_name: Hermes Agent 개인 한국어 노트
+site_url: https://metdaisy.github.io/hermes-ko-docs/
+
+# The Markdown source is checked out from the private content repository by CI.
+docs_dir: draft-storage/hermes-docs
+
+# Material for MkDocs is independent of the blog's Jekyll theme.
+theme:
+  name: material
+
+use_directory_urls: true

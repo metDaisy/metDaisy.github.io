@@ -1,4 +1,4 @@
-"""Import Markdown files from the private draft repository into Jekyll's notes collection."""
+"""Import dev-diary Markdown files into Jekyll's notes collection."""
 
 from __future__ import annotations
 
@@ -75,13 +75,13 @@ def normalize_front_matter(content: str, filename: str) -> str:
 
 
 def markdown_files(source: Path) -> list[Path]:
-    draft_root = source / "draft"
-    if not draft_root.is_dir():
-        raise RuntimeError(f"Draft directory not found in {source}")
+    diary_root = source / "dev-diary"
+    if not diary_root.is_dir():
+        raise RuntimeError(f"Dev-diary directory not found in {source}")
 
     return sorted(
         path
-        for path in draft_root.rglob("*.md")
+        for path in diary_root.rglob("*.md")
         if path.is_file()
         and ".git" not in path.parts
         and path.name.lower() not in EXCLUDED_MARKDOWN_NAMES
@@ -91,7 +91,7 @@ def markdown_files(source: Path) -> list[Path]:
 def import_posts(source: Path, destination: Path) -> int:
     files = markdown_files(source)
     if not files:
-        raise RuntimeError(f"No Markdown posts found in {source / 'draft'}")
+        raise RuntimeError(f"No Markdown posts found in {source / 'dev-diary'}")
 
     destination.mkdir(parents=True, exist_ok=True)
     for existing in destination.glob("*.md"):
