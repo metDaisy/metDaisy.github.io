@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <style>
+    .md-sidebar--primary .md-nav__title[for="__drawer"] {
+      display: none;
+    }
+
+    @media screen and (min-width: 76.25em) {
+      .md-grid {
+        max-width: 90rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (window.mermaid) {
+        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base" });
+        mermaid.run({ querySelector: ".mermaid" });
+      }
+    });
+  </script>
+{% endblock %}

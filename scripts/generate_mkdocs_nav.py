@@ -10,6 +10,29 @@ from typing import Any
 import yaml
 
 
+MERMAID_FENCE_FORMAT_TAG = (
+    "tag:yaml.org,2002:python/name:pymdownx.superfences.fence_code_format"
+)
+
+
+class TaggedYamlValue(str):
+    """Preserve trusted YAML tags while adding generated navigation."""
+
+
+def construct_tagged_yaml_value(loader: yaml.SafeLoader, node: yaml.Node) -> TaggedYamlValue:
+    return TaggedYamlValue(loader.construct_scalar(node))
+
+
+def represent_tagged_yaml_value(
+    dumper: yaml.SafeDumper, value: TaggedYamlValue
+) -> yaml.Node:
+    return dumper.represent_scalar(MERMAID_FENCE_FORMAT_TAG, str(value))
+
+
+yaml.SafeLoader.add_constructor(MERMAID_FENCE_FORMAT_TAG, construct_tagged_yaml_value)
+yaml.SafeDumper.add_representer(TaggedYamlValue, represent_tagged_yaml_value)
+
+
 FRONT_MATTER = re.compile(r"\A---\r?\n(?P<body>.*?)(?:\r?\n)---\r?\n?", re.DOTALL)
 
 

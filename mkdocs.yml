@@ -1,4 +1,4 @@
-site_name: Hermes Agent 개인 한국어 노트
+site_name: Hermes Agent Docs 번역
 site_url: https://metdaisy.github.io/hermes-ko-docs/
 
 # The Markdown source is checked out from the private content repository by CI.
@@ -7,5 +7,13 @@ docs_dir: draft-storage/hermes-docs
 # Material for MkDocs is independent of the blog's Jekyll theme.
 theme:
   name: material
+  custom_dir: overrides
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 use_directory_urls: true
