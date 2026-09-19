@@ -9,6 +9,24 @@ theme:
   name: material
   custom_dir: overrides
 
+  font:
+    # JetBrains Mono family를 본문/UI와 코드 영역에 적용
+    text: JetBrains Mono
+    code: JetBrains Mono
+
+  palette:
+    # 라이트 모드
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: 다크 모드로 전환
+
+    # 다크 모드
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: 라이트 모드로 전환
+
 markdown_extensions:
   - pymdownx.superfences:
       custom_fences:
