@@ -20,10 +20,92 @@
   <script src="https://unpkg.com/mermaid@11.4.1/dist/mermaid.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      if (window.mermaid) {
-        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base" });
-        mermaid.run({ querySelector: ".mermaid" });
+      if (!window.mermaid) {
+        return;
       }
+
+      const sourceByNode = new WeakMap();
+      let renderInFlight = null;
+
+      function isDarkMode() {
+        return document.body?.getAttribute("data-md-color-scheme") === "slate";
+      }
+
+      function themeVariables() {
+        const dark = isDarkMode();
+        return {
+          darkMode: dark,
+          fontFamily: "JetBrains Mono, monospace",
+          fontSize: "16px",
+          background: dark ? "#1f232c" : "#ffffff",
+          textColor: dark ? "#f8fafc" : "#1f2937",
+          lineColor: dark ? "#d1d5db" : "#4b5563",
+          primaryColor: dark ? "#3a4353" : "#e5eefc",
+          primaryTextColor: dark ? "#f8fafc" : "#1f2937",
+          primaryBorderColor: dark ? "#facc15" : "#2563eb",
+          secondaryColor: dark ? "#3b4756" : "#fef3c7",
+          secondaryTextColor: dark ? "#f8fafc" : "#1f2937",
+          secondaryBorderColor: dark ? "#93c5fd" : "#d97706",
+          tertiaryColor: dark ? "#334155" : "#dcfce7",
+          tertiaryTextColor: dark ? "#f8fafc" : "#1f2937",
+          tertiaryBorderColor: dark ? "#86efac" : "#16a34a",
+          clusterBkg: dark ? "#2f3541" : "#f3f4f6",
+          clusterBorder: dark ? "#9ca3af" : "#9ca3af",
+          edgeLabelBackground: dark ? "#1f232c" : "#ffffff",
+        };
+      }
+
+      function renderMermaid() {
+        if (renderInFlight) {
+          return renderInFlight;
+        }
+
+        renderInFlight = (async function () {
+          const nodes = Array.from(document.querySelectorAll(".mermaid"));
+          if (!nodes.length) {
+            return;
+          }
+
+          nodes.forEach(function (node) {
+            if (!sourceByNode.has(node)) {
+              sourceByNode.set(node, node.textContent || "");
+            }
+            node.removeAttribute("data-processed");
+            node.textContent = sourceByNode.get(node);
+          });
+
+          mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            theme: "base",
+            themeVariables: themeVariables(),
+          });
+          await mermaid.run({ nodes: nodes });
+        })().finally(function () {
+          renderInFlight = null;
+        });
+
+        return renderInFlight;
+      }
+
+      renderMermaid();
+
+      const palette = document.querySelector("[data-md-component=palette]");
+      palette?.addEventListener("change", function () {
+        window.setTimeout(renderMermaid, 0);
+      });
+
+      const schemeObserver = new MutationObserver(function (mutations) {
+        if (mutations.some(function (mutation) {
+          return mutation.attributeName === "data-md-color-scheme";
+        })) {
+          renderMermaid();
+        }
+      });
+      schemeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-md-color-scheme"],
+      });
     });
   </script>
 {% endblock %}
