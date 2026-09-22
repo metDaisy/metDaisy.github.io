@@ -28,10 +28,14 @@ theme:
         name: 라이트 모드로 전환
 
 markdown_extensions:
+  - admonition
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+
+hooks:
+  - scripts/mkdocs_hooks.py
 
 use_directory_urls: true

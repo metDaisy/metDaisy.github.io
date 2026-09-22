@@ -7,6 +7,7 @@ on:
       - '.github/workflows/pages-hermes-docs.yml'
       - 'mkdocs.yml'
       - 'scripts/generate_mkdocs_nav.py'
+      - 'scripts/mkdocs_hooks.py'
   repository_dispatch:
     types: [hermes_docs_update]
   workflow_dispatch:
